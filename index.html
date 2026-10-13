@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UNSAAC IMC - Aplicación Obstétrica, Gestante & Diagrama de Flujo Offline</title>
+    <meta name="theme-color" content="#9333ea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Obstetricia UNSAAC">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        /* Flowchart Node Glow Animations */
+        @keyframes activePulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(147, 51, 234, 0.4);
+                transform: scale(1.02);
+            }
+            50% {
+                box-shadow: 0 0 22px rgba(147, 51, 234, 0.7);
+                transform: scale(1.05);
+            }
+        }
+
+        .flow-node-active {
+            animation: activePulse 1.5s infinite ease-in-out;
+            border-color: #9333ea !important;
+            background-color: #f3e8ff !important;
+            color: #581c87 !important;
+        }
+
+        .gauge-pointer {
+            transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Equalizer Audio Visualizer Animation */
+        @keyframes eqBar {
+            0%, 100% { height: 4px; }
+            50% { height: 18px; }
+        }
+
+        .eq-bar-1 { animation: eqBar 0.4s infinite ease-in-out; }
+        .eq-bar-2 { animation: eqBar 0.6s infinite ease-in-out 0.15s; }
+        .eq-bar-3 { animation: eqBar 0.35s infinite ease-in-out 0.3s; }
+        .eq-bar-4 { animation: eqBar 0.5s infinite ease-in-out 0.1s; }
+
+        /* Fetal Heartbeat Pulse Ring */
+        @keyframes heartPulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.18); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
+        .animate-fetal-heart {
+            animation: heartPulse 0.43s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c084fc;
+            border-radius: 99px;
+        }
+
+        @media print {
+            header, nav, .no-print, footer { display: none !important; }
+            body { background: white; color: black; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-purple-50/50 to-rose-50/50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-purple-200">
+
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-purple-100 shadow-sm">
+        <!-- UNSAAC Banner Ribbon -->
+        <div class="bg-gradient-to-r from-purple-800 via-rose-700 to-indigo-700 text-white text-[11px] font-extrabold py-1.5 px-4 shadow-xs">
+            <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-amber-300 text-sm"></i>
+                    <span class="tracking-wide uppercase">UNSAAC &bull; Escuela Profesional de Obstetricia</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-white text-[10px] border border-white/30">
+                    <i class="fa-solid fa-user-nurse text-amber-300"></i>
+                    <span>EAP Obstetricia &bull; <strong>Gestante & Norma Técnica MINSA</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Header -->
+        <div class="max-w-6xl mx-auto px-4 py-2.5 flex justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-purple-200 shrink-0">
+                    <i class="fa-solid fa-person-pregnant text-amber-200"></i>
+                </div>
+
+                <div>
+                    <h1 class="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        Obstetricia UNSAAC &bull; IMC & Evaluador Gestacional
+                        <span id="offlineStatusBadge" class="text-[9px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Modo Offline Listo</span>
+                        </span>
+                    </h1>
+                    <p class="text-[11px] text-purple-700 font-bold">Autora: Hayde Yeniffer Lizaraso Sarmiento | Obstetricia UNSAAC</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Audio Equalizer Visualizer -->
+                <div id="audioVisualizer" class="hidden sm:flex items-end gap-0.5 h-5 px-2 py-1 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span class="w-1 bg-purple-600 rounded-xs eq-bar-1"></span>
+                    <span class="w-1 bg-rose-500 rounded-xs eq-bar-2"></span>
+                    <span class="w-1 bg-indigo-600 rounded-xs eq-bar-3"></span>
+                    <span class="w-1 bg-amber-500 rounded-xs eq-bar-4"></span>
+                </div>
+
+                <button id="bgMusicToggleBtn" onclick="toggleBgMusic()" class="px-3 py-1.5 rounded-2xl bg-rose-100/80 hover:bg-rose-200 border border-rose-300 text-rose-900 text-xs font-black transition flex items-center gap-1.5 shadow-xs">
+                    <i id="bgMusicIcon" class="fa-solid fa-music text-rose-600"></i>
+                    <span class="hidden sm:inline" id="bgMusicStatusText">Música Ambient Lofi</span>
+                </button>
+
+                <div class="relative">
+                    <select id="btsMelodySelect" onchange="changeBTSMelody(this.value)" class="px-2.5 py-1.5 rounded-2xl bg-purple-100/80 border border-purple-200 text-purple-900 text-xs font-black transition cursor-pointer shadow-xs focus:ring-2 focus:ring-purple-400">
+                        <option value="lofi_lullaby">🌙 Lofi Relax & Nana Gestacional</option>
+                        <option value="springday">🌸 BTS - Spring Day (Acoustic)</option>
+                        <option value="heartbeat">💓 BTS - Heartbeat (Doppler Mix)</option>
+                        <option value="lifegoeson">🍃 BTS - Life Goes On</option>
+                        <option value="dna">🧬 BTS - DNA (Arpeggio Synth)</option>
+                        <option value="dynamite">🧨 BTS - Dynamite (Chill Beat)</option>
+                        <option value="butter">🧈 BTS - Butter (Soft Jazz)</option>
+                        <option value="fetal">👶 Latido Fetal (Simulador Doppler)</option>
+                    </select>
+                </div>
+
+                <button id="dramaticTestBtn" onclick="playDramaticResultSound('danger')" class="px-3 py-1.5 rounded-2xl bg-amber-100/90 hover:bg-amber-200 border border-amber-300 text-amber-950 text-xs font-black transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-drum text-amber-600"></i>
+                    <span class="hidden sm:inline">Probar Sonido Dramático 🎬</span>
+                </button>
+
+                <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-purple-600 text-sm"></i>
+                    <span class="hidden sm:inline" id="soundStatusText">Efectos On</span>
+                </button>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex max-w-6xl mx-auto px-4 gap-1.5 border-t border-purple-50 pt-1 pb-1 text-xs font-black overflow-x-auto">
+            <button onclick="switchTab('calculadora')" id="tab-btn-calculadora" class="tab-btn px-3.5 py-2 rounded-xl text-purple-800 bg-purple-100/80 flex items-center gap-2 font-black transition">
+                <i class="fa-solid fa-calculator text-purple-600"></i> Calculadora IMC General
+            </button>
+            <button onclick="switchTab('obstetricia')" id="tab-btn-obstetricia" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-black transition">
+                <i class="fa-solid fa-person-pregnant text-rose-500"></i> Evaluador Gestante (MINSA)
+            </button>
+            <button onclick="switchTab('gestograma')" id="tab-btn-gestograma" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 font-black transition">
+                <i class="fa-solid fa-calendar-check text-indigo-500"></i> Gestograma & FPP
+            </button>
+            <button onclick="switchTab('analisis')" id="tab-btn-analisis" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 flex items-center gap-2 font-black transition">
+                <i class="fa-solid fa-pills text-emerald-500"></i> Suplementación Gestante
+            </button>
+            <button onclick="switchTab('historial')" id="tab-btn-historial" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 flex items-center gap-2 font-black transition">
+                <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> Historial
+            </button>
+        </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-5 flex-grow w-full">
+
+        <div id="view-calculadora" class="tab-view grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Form Input & Presets -->
+            <section class="lg:col-span-5 space-y-5">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-lg shadow-purple-100/50 border border-slate-100 space-y-4">
+                    <div class="flex items-center justify-between border-b border-purple-50 pb-3">
+                        <h2 class="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-sliders"></i>
+                            </span>
+                            Datos de Entrada (Evaluador Antropométrico)
+                        </h2>
+                        <span class="text-[10px] font-black px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full">S. Métrico</span>
+                    </div>
+
+                    <form id="imcForm" onsubmit="event.preventDefault(); ejecutarAlgoritmo();" class="space-y-4">
+                        <!-- Peso -->
+                        <div>
+                            <label for="peso" class="block text-[11px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                Peso Corporal (kg)
+                            </label>
+                            <div class="relative">
+                                <input 
+                                    type="number" 
+                                    id="peso" 
+                                    step="0.1" 
+                                    min="1" 
+                                    max="300" 
+                                    placeholder="Ej. 68.5" 
+                                    required
+                                    oninput="ejecutarAlgoritmo()"
+                                    class="w-full px-4 py-3 pl-11 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-purple-500 text-slate-800 text-base font-bold transition placeholder:text-slate-300 shadow-inner"
+                                >
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-500 text-base">
+                                    <i class="fa-solid fa-weight-scale"></i>
+                                </div>
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 bg-slate-200 px-2 py-0.5 rounded-md">KG</span>
+                            </div>
+                        </div>
+
+                        <!-- Estatura / Talla -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="talla" class="block text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                                    Talla / Estatura (m)
+                                </label>
+                                <button type="button" onclick="autocorregirTallaCm()" class="text-[10px] text-purple-600 hover:text-purple-800 font-extrabold flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> ¿En cm?
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input 
+                                    type="number" 
+                                    id="talla" 
+                                    step="0.01" 
+                                    min="0.3" 
+                                    max="2.8" 
+                                    placeholder="Ej. 1.68" 
+                                    required
+                                    oninput="ejecutarAlgoritmo()"
+                                    class="w-full px-4 py-3 pl-11 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-purple-500 text-slate-800 text-base font-bold transition placeholder:text-slate-300 shadow-inner"
+                                >
+                                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-500 text-base">
+                                    <i class="fa-solid fa-ruler-vertical"></i>
+                                </div>
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 bg-slate-200 px-2 py-0.5 rounded-md">METROS</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2.5 pt-1">
+                            <button 
+                                type="button" 
+                                onclick="limpiarFormulario()" 
+                                class="py-3 px-3 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 active:scale-95 transition text-xs flex items-center justify-center gap-1.5"
+                            >
+                                <i class="fa-solid fa-rotate-left text-slate-400"></i> Reiniciar
+                            </button>
+                            <button 
+                                type="submit" 
+                                class="py-3 px-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-95 text-white font-black shadow-md shadow-purple-200 transition text-xs flex items-center justify-center gap-1.5"
+                            >
+                                <i class="fa-solid fa-play"></i> Calcular IMC
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Quick Category Selector -->
+                <div class="bg-white p-4 rounded-3xl shadow-lg shadow-purple-100/50 border border-slate-100 space-y-2.5">
+                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>Casos de Prueba Rápidos</span>
+                        <i class="fa-solid fa-bolt text-amber-400"></i>
+                    </h3>
+                    
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="presetData(48, 1.70)" class="p-2 bg-sky-50 border border-sky-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-sky-800">Bajo Peso</div>
+                            <div class="text-[9px] font-bold text-sky-600">&lt; 18.5</div>
+                        </button>
+
+                        <button onclick="presetData(65, 1.70)" class="p-2 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-emerald-800">Normal</div>
+                            <div class="text-[9px] font-bold text-emerald-600">18.5 - 24.9</div>
+                        </button>
+
+                        <button onclick="presetData(78, 1.70)" class="p-2 bg-amber-50 border border-amber-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-amber-800">Sobrepeso</div>
+                            <div class="text-[9px] font-bold text-amber-600">25 - 29.9</div>
+                        </button>
+
+                        <button onclick="presetData(92, 1.70)" class="p-2 bg-orange-50 border border-orange-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-orange-800">Ob. Tipo 1</div>
+                            <div class="text-[9px] font-bold text-orange-600">30 - 34.9</div>
+                        </button>
+
+                        <button onclick="presetData(106, 1.70)" class="p-2 bg-rose-50 border border-rose-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-rose-800">Ob. Tipo 2</div>
+                            <div class="text-[9px] font-bold text-rose-600">35 - 39.9</div>
+                        </button>
+
+                        <button onclick="presetData(122, 1.70)" class="p-2 bg-purple-50 border border-purple-200/80 rounded-2xl text-center card-hover cursor-pointer">
+                            <div class="text-[11px] font-black text-purple-800">Ob. Tipo 3</div>
+                            <div class="text-[9px] font-bold text-purple-600">&ge; 40</div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Output -->
+            <section class="lg:col-span-7 space-y-5">
+                <div class="bg-white p-6 rounded-3xl shadow-lg shadow-purple-100/50 border border-slate-100 relative">
+                    <div class="flex justify-between items-start gap-4 border-b border-slate-100 pb-3">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Resultado del Algoritmo</span>
+                            <h2 class="text-2xl font-black text-slate-800 mt-0.5" id="resCategoryTitle">Ingresa datos</h2>
+                        </div>
+                        <div id="resBadge" class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-400">
+                            En espera
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Health Alert Sign ("Letrerito" Bien / Mal) -->
+                    <div id="healthAlertSign" class="hidden my-3 p-4 rounded-2xl border flex items-center gap-3 transition-all shadow-sm">
+                        <div id="healthAlertIcon" class="text-3xl shrink-0"></div>
+                    <!-- Calculated Value & Mascot Box with Vector Illustration -->
+                    <div class="my-4 p-5 rounded-3xl bg-gradient-to-r from-purple-50 via-slate-50 to-indigo-50 border border-purple-100/60 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div id="resMascotIcon" class="w-28 h-28 rounded-2xl bg-white shadow-md flex items-center justify-center p-2 shrink-0 border border-purple-100 transition-all transform hover:scale-105">
+                            <!-- SVG Illustration: Pregnant Mother & Health Heart -->
+                            <svg class="w-20 h-20 text-purple-500" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="50" r="45" fill="#F3E8FF"/>
+                                <path d="M50 25C43 25 38 30 38 37C38 41 40 44 43 46C36 50 31 58 31 68H69C69 58 64 50 57 46C60 44 62 41 62 37C62 30 57 25 50 25Z" fill="#A855F7"/>
+                                <path d="M50 48C43.5 48 38 53.5 38 60C38 66.5 43.5 72 50 72C56.5 72 62 66.5 62 60C62 53.5 56.5 48 50 48Z" fill="#EC4899" opacity="0.85"/>
+                                <path d="M50 54C48 54 46 56 46 58C46 60.5 50 64 50 64C50 64 54 60.5 54 58C54 56 52 54 50 54Z" fill="white"/>
+                            </svg>
+                        </div>
+
+                        <div class="text-center sm:text-right flex-grow">
+                            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">IMC Calculado (peso / talla²)</span>
+                            <div class="text-5xl font-black text-slate-800 tracking-tight" id="resIMCVal">0.00</div>
+                            <p class="text-xs text-slate-600 font-bold mt-2" id="resStepDescription">
+                                Ingrese peso y talla para calcular de forma inmediata el Índice de Masa Corporal y recomendaciones.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Gauge Range Bar -->
+                    <div class="space-y-1.5 mb-4">
+                        <div class="flex justify-between text-[9px] font-black text-slate-400 px-1">
+                            <span>15</span>
+                            <span>18.5</span>
+                            <span>25</span>
+                            <span>30</span>
+                            <span>35</span>
+                            <span>40+</span>
+                        </div>
+                        <div class="h-3.5 w-full bg-slate-100 rounded-full overflow-hidden flex relative shadow-inner border border-slate-200">
+                            <div style="width: 15%" class="bg-sky-400 h-full"></div>
+                            <div style="width: 25%" class="bg-emerald-400 h-full"></div>
+                            <div style="width: 20%" class="bg-amber-400 h-full"></div>
+                            <div style="width: 15%" class="bg-orange-400 h-full"></div>
+                            <div style="width: 15%" class="bg-rose-400 h-full"></div>
+                            <div style="width: 10%" class="bg-purple-500 h-full"></div>
+                            <div id="gaugePointer" class="gauge-pointer absolute top-0 bottom-0 w-3 bg-slate-900 border-2 border-white rounded-full shadow-lg -ml-1.5" style="left: 0%; opacity: 0;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Healthy Weight Target Range -->
+                    <div id="healthyRangeBox" class="hidden p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 space-y-0.5">
+                        <div class="font-black flex items-center gap-2 text-emerald-800">
+                            <i class="fa-solid fa-bullseye text-emerald-600"></i>
+                            Rango Objetivo de Peso Saludable (18.5 ≤ IMC &lt; 25)
+                        </div>
+                        <p class="text-[11px] text-emerald-800 font-bold" id="healthyRangeText">
+                            Para tu talla, el peso ideal se ubica entre 0.0 kg y 0.0 kg.
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div id="resultActions" class="hidden mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 justify-end">
+                        <button onclick="copiarResultado()" class="px-3.5 py-2 text-xs font-black bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy text-purple-600"></i> Copiar Resultado
+                        </button>
+                        <button onclick="guardarEnHistorial()" class="px-3.5 py-2 text-xs font-black bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-bookmark text-purple-600"></i> Guardar Historial
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Aesthetic Summary Card -->
+                <div class="bg-gradient-to-r from-purple-800 to-indigo-900 text-white p-5 rounded-3xl shadow-lg space-y-3 relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 blur-xl"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <h3 class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-notes-medical text-amber-300"></i> Resumen Clínico Obstétrico
+                        </h3>
+                        <span class="text-[10px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold">MINSA Perú</span>
+                    </div>
+                    <p class="text-xs text-purple-100 font-medium leading-relaxed relative z-10">
+                        Evaluación prenatal basada en la Norma Técnica de Salud para la atención integral de la gestante. Monitoriza cambios ponderales y previene riesgos metabólicos prenatales.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <div id="view-obstetricia" class="tab-view hidden space-y-5">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-person-pregnant text-rose-600"></i>
+                            Evaluador de la Gestante & Ganancia Ponderal (MINSA Perú & Atalah)
+                        </h2>
+                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Monitoreo antropométrico prenatal completo: Preconcepcional, Ganancia Ponderal Acumulada, Altura Uterina y Peso Fetal Estimado.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="playFetalHeartbeatSound()" class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-black rounded-xl shadow-md flex items-center gap-1.5 transition active:scale-95">
+                            <i class="fa-solid fa-heart-pulse animate-fetal-heart"></i>
+                            <span>Escuchar Doppler Fetal</span>
+                        </button>
+                        <span class="text-xs font-black bg-rose-100 text-rose-800 px-3 py-1 rounded-full border border-rose-200">
+                            Norma Técnica MINSA
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Formulario Gestacional Extendido -->
+                    <div class="lg:col-span-5 space-y-4 bg-rose-50/50 p-5 rounded-3xl border border-rose-100">
+                        <h3 class="text-xs font-black uppercase text-rose-800 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-user"></i> Control Prenatal de la Gestante
+                        </h3>
+
+                        <form onsubmit="event.preventDefault(); calcularIMCGestacional();" class="space-y-3.5">
+                            <!-- Peso Preconcepcional -->
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Peso Preconcepcional (kg) [Antes del Embarazo]</label>
+                                <input type="number" id="obsPesoPre" step="0.1" min="30" max="200" placeholder="Ej. 58.0" oninput="calcularIMCGestacional()" class="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-200 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-rose-400 shadow-inner">
+                            </div>
+
+                            <!-- Peso Actual -->
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Peso Gestacional Actual (kg)</label>
+                                <input type="number" id="obsPeso" step="0.1" min="30" max="200" placeholder="Ej. 65.5" oninput="calcularIMCGestacional()" class="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-200 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-rose-400 shadow-inner">
+                            </div>
+
+                            <!-- Talla -->
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-600 uppercase mb-1">Talla / Estatura (m)</label>
+                                <input type="number" id="obsTalla" step="0.01" min="1.20" max="2.20" placeholder="Ej. 1.58" oninput="calcularIMCGestacional()" class="w-full px-4 py-2.5 rounded-xl bg-white border border-rose-200 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-rose-400 shadow-inner">
+                            </div>
+
+                            <!-- Semanas de Gestación Slider -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-[11px] font-black text-slate-600 uppercase">Edad Gestacional (Semanas)</label>
+                                    <span id="egLabel" class="text-xs font-black text-rose-700 bg-white px-2.5 py-0.5 rounded-lg border border-rose-200 shrink-0">24 Semanas</span>
+                                </div>
+                                <input type="range" id="obsEG" min="6" max="42" value="24" oninput="document.getElementById('egLabel').textContent = this.value + ' Semanas'; calcularIMCGestacional();" class="w-full accent-rose-600">
+                            </div>
+
+                            <button type="button" onclick="calcularIMCGestacional()" class="w-full py-3 bg-gradient-to-r from-rose-600 to-purple-600 text-white font-black text-xs rounded-xl shadow-md shadow-rose-200 hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-stethoscope"></i> Evaluar Estado Nutricional & Ganancia
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Resultado Gestacional Extendido -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="p-5 bg-white border border-slate-200 rounded-3xl shadow-xs space-y-4">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <span class="text-xs font-black text-slate-400 uppercase">Diagnóstico Nutricional Prenatal (MINSA / Atalah)</span>
+                                <span id="obsBadge" class="px-3 py-1 rounded-full text-xs font-black bg-slate-100 text-slate-500">En espera</span>
+                            </div>
+
+                            <div class="flex items-center gap-4 py-2">
+                                <!-- Enhanced SVG Baby Illustration -->
+                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-rose-100 to-purple-100 flex items-center justify-center p-2 shrink-0 border border-rose-200 shadow-sm">
+                                    <svg class="w-16 h-16 text-rose-500 animate-pulse" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="40" fill="#FFE4E6"/>
+                                        <circle cx="50" cy="38" r="16" fill="#FB7185"/>
+                                        <path d="M30 75C30 58 40 50 50 50C60 50 70 58 70 75H30Z" fill="#F43F5E"/>
+                                        <path d="M50 30C46 30 43 33 43 36C43 40 50 44 50 44C50 44 57 40 57 36C57 33 54 30 50 30Z" fill="white"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div id="obsIMCText" class="text-3xl font-black text-slate-800">IMC Gestacional: --</div>
+                                    <p id="obsDiagText" class="text-xs font-bold text-slate-600 mt-0.5">Ingrese los pesos, talla y semanas para obtener el diagnóstico completo de la gestante.</p>
+                                </div>
+                            </div>
+
+                            <!-- Métricas de Ganancia Ponderal & Estimación Fetal -->
+                            <div id="obsExpandedMetrics" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100">
+                                <div class="p-3 bg-rose-50/80 rounded-2xl border border-rose-100 text-center">
+                                    <span class="text-[9px] font-black text-rose-500 uppercase block">Ganancia Acumulada</span>
+                                    <span id="obsGainVal" class="text-base font-black text-rose-900">+0.0 kg</span>
+                                </div>
+                                <div class="p-3 bg-purple-50/80 rounded-2xl border border-purple-100 text-center">
+                                    <span class="text-[9px] font-black text-purple-500 uppercase block">Ganancia Semanal</span>
+                                    <span id="obsGainWeeklyVal" class="text-base font-black text-purple-900">0.0 kg/sem</span>
+                                </div>
+                                <div class="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-100 text-center">
+                                    <span class="text-[9px] font-black text-indigo-500 uppercase block">Altura Uterina Est.</span>
+                                    <span id="obsAUVal" class="text-base font-black text-indigo-900">-- cm</span>
+                                </div>
+                                <div class="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 text-center">
+                                    <span class="text-[9px] font-black text-emerald-500 uppercase block">Peso Fetal Estimado</span>
+                                    <span id="obsPFEVal" class="text-base font-black text-emerald-900">-- g</span>
+                                </div>
+                            </div>
+
+                            <!-- Recomendación de ganancia de peso materna -->
+                            <div id="obsRecommendation" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1.5">
+                                <div class="font-black flex items-center gap-2 text-rose-800 text-sm">
+                                    <i class="fa-solid fa-scale-balanced text-rose-600"></i>
+                                    Evaluación de Ganancia de Peso & Alertas Clínicas
+                                </div>
+                                <p id="obsWeightGainText" class="font-bold text-[11px] text-rose-800">
+                                    Recomendación de ganancia de peso según categoría inicial preconcepcional.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Atalah Reference Table Summary -->
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                            <h4 class="font-black text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-book-medical text-purple-600"></i>
+                                Clasificación Nutricional de la Gestante (Atalah / MINSA)
+                            </h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-bold text-center">
+                                <div class="p-2 bg-sky-100 text-sky-900 rounded-xl">Enflaquecida / Bajo Peso (&lt; 20.0 IMC a las 10 sem)</div>
+                                <div class="p-2 bg-emerald-100 text-emerald-900 rounded-xl">Normal (20.0 - 24.9 IMC)</div>
+                                <div class="p-2 bg-amber-100 text-amber-900 rounded-xl">Sobrepeso (25.0 - 29.9 IMC)</div>
+                                <div class="p-2 bg-rose-100 text-rose-900 rounded-xl">Obesidad (&ge; 30.0 IMC)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-gestograma" class="tab-view hidden space-y-5">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check text-indigo-600"></i>
+                            Gestograma Obstétrico & Fecha Probable de Parto (FPP)
+                        </h2>
+                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Cálculo de la Edad Gestacional (EG) por Fecha de Última Menstruación (FUM) - Regla de Naegele.</p>
+                    </div>
+                    <span class="text-xs font-black bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full border border-indigo-200">
+                        Regla de Naegele
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- FUM Input Form -->
+                    <div class="p-5 rounded-3xl bg-indigo-50/50 border border-indigo-100 space-y-4">
+                        <h3 class="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days"></i> Ingrese FUM
+                        </h3>
+
+                        <div>
+                            <label for="fumDate" class="block text-[11px] font-black text-slate-600 uppercase mb-1">
+                                Fecha de Última Menstruación (FUM)
+                            </label>
+                            <input type="date" id="fumDate" onchange="calcularFUM()" class="w-full px-4 py-3 rounded-2xl bg-white border border-indigo-200 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 shadow-xs">
+                        </div>
+
+                        <button onclick="calcularFUM()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-200 hover:brightness-105 active:scale-95 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-calculator"></i> Calcular Edad Gestacional & FPP
+                        </button>
+                    </div>
+
+                    <!-- FPP Results Display -->
+                    <div class="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <span class="text-xs font-black text-slate-400 uppercase">Resultados de Obstetricia</span>
+                            
+                            <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 space-y-1">
+                                <span class="text-[10px] font-black text-indigo-600 uppercase">Edad Gestacional Actual (EG)</span>
+                                <div id="resEGVal" class="text-3xl font-black text-indigo-900">-- Semanas</div>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-purple-50 border border-purple-100 space-y-1">
+                                <span class="text-[10px] font-black text-purple-600 uppercase">Fecha Probable de Parto (FPP)</span>
+                                <div id="resFPPVal" class="text-2xl font-black text-purple-900">-- / -- / ----</div>
+                            </div>
+                        </div>
+
+                        <div id="fppTrimestres" class="text-[11px] font-bold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            Seleccione la FUM para calcular el trimestre actual de gestación.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-analisis" class="tab-view hidden space-y-5">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-pills text-emerald-600"></i>
+                        Guía de Suplementación & Nutrición Materna (MINSA Perú)
+                    </h2>
+                    <span class="text-xs font-black bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200">Obstetricia UNSAAC</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-2">
+                        <div class="font-black text-xs text-emerald-900 flex items-center gap-2">
+                            <!-- SVG Pill Icon -->
+                            <svg class="w-5 h-5 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4.5 10.5C3.12 10.5 2 11.62 2 13V17.5C2 18.88 3.12 20 4.5 20H9C10.38 20 11.5 18.88 11.5 17.5V13C11.5 11.62 10.38 10.5 9 10.5H4.5ZM19.5 4C18.12 4 17 5.12 17 6.5V11C17 12.38 18.12 13.5 19.5 13.5H24C25.38 13.5 26.5 12.38 26.5 11V6.5C26.5 5.12 25.38 4 24 4H19.5Z" />
+                            </svg>
+                            Hierro + Ácido Fólico
+                        </div>
+                        <p class="text-[11px] text-emerald-800 font-medium">
+                            Iniciar a partir de la semana 14 de gestación: 60 mg de Hierro elemental + 400 mcg de Ácido Fólico diariamente.
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-sky-50/60 rounded-2xl border border-sky-100 space-y-2">
+                        <div class="font-black text-xs text-sky-900 flex items-center gap-2">
+                            <i class="fa-solid fa-glass-water text-sky-600"></i>
+                            Hidratación Gestacional
+                        </div>
+                        <p class="text-[11px] text-sky-800 font-medium">
+                            Consumo sugerido de agua: 35 ml por kg de peso corporal al día (~2.0 L a 2.8 L según peso gestacional).
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2">
+                        <div class="font-black text-xs text-amber-900 flex items-center gap-2">
+                            <i class="fa-solid fa-bone text-amber-600"></i>
+                            Suplementación de Calcio
+                        </div>
+                        <p class="text-[11px] text-amber-800 font-medium">
+                            A partir de la semana 20 de gestación: 1500 mg a 2000 mg/día divididos en 3 tomas con los alimentos para prevención de preeclampsia.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Live Calculated Metrics Card -->
+                <div class="p-5 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 space-y-2">
+                    <h3 class="text-xs font-black text-purple-900">Métricas Estimadas según tu Peso Actual:</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                        <div class="p-2.5 bg-white rounded-xl shadow-xs">
+                            <span class="text-[10px] font-black text-slate-400 block">Agua Sugerida</span>
+                            <span id="analysisWaterVal" class="text-sm font-black text-purple-700">-- L/día</span>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-xl shadow-xs">
+                            <span class="text-[10px] font-black text-slate-400 block">Calorías Basales</span>
+                            <span id="analysisCalVal" class="text-sm font-black text-purple-700">-- kcal</span>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-xl shadow-xs">
+                            <span class="text-[10px] font-black text-slate-400 block">Categoría IMC</span>
+                            <span id="analysisCatVal" class="text-sm font-black text-purple-700">--</span>
+                        </div>
+                        <div class="p-2.5 bg-white rounded-xl shadow-xs">
+                            <span class="text-[10px] font-black text-slate-400 block">Diagnóstico</span>
+                            <span id="analysisNoteVal" class="text-sm font-black text-purple-700">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-historial" class="tab-view hidden space-y-5">
+            <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-purple-600"></i>
+                        Historial de Cálculos Guardados (Offline LocalStorage)
+                    </h2>
+                    <button onclick="borrarHistorial()" class="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-trash-can"></i> Limpiar Todo
+                    </button>
+                </div>
+
+                <div id="historyList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <p class="text-xs text-slate-400 italic text-center py-8 font-medium">No hay registros guardados en la memoria del dispositivo.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-100 px-2 py-1.5 shadow-lg">
+        <div class="grid grid-cols-4 gap-1 text-center">
+            <button onclick="switchTab('calculadora')" id="m-tab-calculadora" class="m-tab-btn py-1 text-purple-700 font-bold flex flex-col items-center">
+                <i class="fa-solid fa-calculator text-base"></i>
+                <span class="text-[8px] font-black mt-0.5">IMC</span>
+            </button>
+            <button onclick="switchTab('obstetricia')" id="m-tab-obstetricia" class="m-tab-btn py-1 text-slate-400 flex flex-col items-center">
+                <i class="fa-solid fa-person-pregnant text-base"></i>
+                <span class="text-[8px] font-black mt-0.5">Gestante</span>
+            </button>
+            <button onclick="switchTab('gestograma')" id="m-tab-gestograma" class="m-tab-btn py-1 text-slate-400 flex flex-col items-center">
+                <i class="fa-solid fa-calendar-check text-base"></i>
+                <span class="text-[8px] font-black mt-0.5">FPP</span>
+            </button>
+            <button onclick="switchTab('historial')" id="m-tab-historial" class="m-tab-btn py-1 text-slate-400 flex flex-col items-center">
+                <i class="fa-solid fa-clock-rotate-left text-base"></i>
+                <span class="text-[8px] font-black mt-0.5">Historial</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Message -->
+    <div id="toastMessage" class="fixed bottom-16 md:bottom-6 right-5 z-50 hidden p-3.5 rounded-2xl shadow-xl border text-xs font-black transition-all max-w-xs"></div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-purple-100 py-3 text-center text-xs text-slate-500 mt-6 mb-12 md:mb-0">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>
+                <strong>UNSAAC</strong> &bull; Universidad Nacional de San Antonio Abad del Cusco
+            </div>
+            <div class="text-purple-800 font-black">
+                Autora: Hayde Yeniffer Lizaraso Sarmiento &bull; Obstetricia
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let soundEnabled = true;
+        let selectedMelody = 'lofi_lullaby';
+        let ultimoResultado = null;
+
+        // Dynamic Polyphonic Web Audio Ambient Engine
+        let bgMusicPlaying = false;
+        let bgMusicContext = null;
+        let bgMusicTimeout = null;
+        let bgStep = 0;
+
+        // Dynamic Dramatic Cinematic Sound Generator (Web Audio API - No External Files)
+        function playDramaticResultSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                const now = ctx.currentTime;
+
+                if (type === 'normal' || type === 'success') {
+                    // DRAMATIC TRIUMPHANT FANFARE (Major brass hit + sub boom)
+                    const freqs = [261.63, 329.63, 392.00, 523.25, 659.25]; // C Major triumph
+                    
+                    // Sub boom hit
+                    const sub = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    sub.type = 'triangle';
+                    sub.frequency.setValueAtTime(160, now);
+                    sub.frequency.exponentialRampToValueAtTime(30, now + 0.6);
+                    subGain.gain.setValueAtTime(0.6, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    sub.connect(subGain); subGain.connect(ctx.destination);
+                    sub.start(now); sub.stop(now + 0.6);
+
+                    // Brass Fanfare Stabs
+                    freqs.forEach((f, idx) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f, now + idx * 0.07);
+
+                        gain.gain.setValueAtTime(0.001, now + idx * 0.07);
+                        gain.gain.linearRampToValueAtTime(0.22, now + idx * 0.07 + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 1.3);
+
+                        const filter = ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(1400, now + idx * 0.07);
+                        filter.frequency.exponentialRampToValueAtTime(300, now + idx * 0.07 + 1.3);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start(now + idx * 0.07);
+                        osc.stop(now + idx * 0.07 + 1.35);
+                    });
+                } else if (type === 'warning' || type === 'bajo_peso') {
+                    // DRAMATIC SUSPENSE TENSION (A3 -> G#3 -> G3 Tension Swell)
+                    const freqs = [220.00, 207.65, 196.00];
+                    freqs.forEach((f, idx) => {
+                        const startTime = now + idx * 0.20;
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f, startTime);
+
+                        gain.gain.setValueAtTime(0.001, startTime);
+                        gain.gain.linearRampToValueAtTime(0.28, startTime + 0.03);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.55);
+
+                        const filter = ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(900, startTime);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.6);
+                    });
+                } else {
+                    // DRAMATIC CINEMATIC IMPACT & OBESITY ALARM ("DUN DUN DUNNN!" + Deep Sub Boom)
+                    // 1. Deep Sub Impact Boom
+                    const sub = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    sub.type = 'sine';
+                    sub.frequency.setValueAtTime(140, now);
+                    sub.frequency.exponentialRampToValueAtTime(20, now + 0.85);
+                    subGain.gain.setValueAtTime(0.8, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+                    sub.connect(subGain); subGain.connect(ctx.destination);
+                    sub.start(now); sub.stop(now + 0.85);
+
+                    // 2. Diminished Brass Hit
+                    const brassChord = [146.83, 174.61, 207.65, 246.94, 293.66];
+                    brassChord.forEach((f) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f, now);
+
+                        gain.gain.setValueAtTime(0.001, now);
+                        gain.gain.linearRampToValueAtTime(0.3, now + 0.03);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+                        const filter = ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(1800, now);
+                        filter.frequency.exponentialRampToValueAtTime(180, now + 1.4);
+
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc.start(now);
+                        osc.stop(now + 1.45);
+                    });
+
+                    // 3. Second Follow-up Heavy Orchestral Impact
+                    setTimeout(() => {
+                        try {
+                            const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+                            if (ctx2.state === 'suspended') ctx2.resume();
+                            const now2 = ctx2.currentTime;
+                            
+                            const heavyChord = [110.00, 138.59, 164.81, 220.00];
+                            heavyChord.forEach((f) => {
+                                const osc = ctx2.createOscillator();
+                                const gain = ctx2.createGain();
+                                osc.type = 'sawtooth';
+                                osc.frequency.setValueAtTime(f, now2);
+
+                                gain.gain.setValueAtTime(0.001, now2);
+                                gain.gain.linearRampToValueAtTime(0.38, now2 + 0.02);
+                                gain.gain.exponentialRampToValueAtTime(0.001, now2 + 1.2);
+
+                                const filter = ctx2.createBiquadFilter();
+                                filter.type = 'lowpass';
+                                filter.frequency.setValueAtTime(2200, now2);
+                                filter.frequency.exponentialRampToValueAtTime(120, now2 + 1.2);
+
+                                osc.connect(filter);
+                                filter.connect(gain);
+                                gain.connect(ctx2.destination);
+
+                                osc.start(now2);
+                                osc.stop(now2 + 1.25);
+                            });
+                        } catch(err){}
+                    }, 340);
+                }
+            } catch(e) {
+                console.warn("Dramatic sound playback error:", e);
+            }
+        }
+
+        // Warm Lofi Ambient Chords & Melodies
+        const BG_CHORDS = [
+            [261.63, 329.63, 392.00, 523.25], // Cmaj7 (C E G C)
+            [220.00, 261.63, 329.63, 440.00], // Am7 (A C E A)
+            [174.61, 220.00, 261.63, 349.23], // Fmaj7 (F A C F)
+            [196.00, 246.94, 293.66, 392.00]  // G7 (G B D G)
+        ];
+
+        function toggleBgMusic() {
+            bgMusicPlaying = !bgMusicPlaying;
+            const btn = document.getElementById('bgMusicToggleBtn');
+            const icon = document.getElementById('bgMusicIcon');
+            const text = document.getElementById('bgMusicStatusText');
+            const visualizer = document.getElementById('audioVisualizer');
+
+            if (bgMusicPlaying) {
+                if (!bgMusicContext) {
+                    bgMusicContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (bgMusicContext.state === 'suspended') {
+                    bgMusicContext.resume();
+                }
+                btn.className = "px-3 py-1.5 rounded-2xl bg-gradient-to-r from-rose-500 to-purple-600 text-white font-black text-xs transition flex items-center gap-1.5 shadow-md animate-pulse";
+                icon.className = "fa-solid fa-compact-disc fa-spin text-white";
+                text.textContent = "Lofi Sonando 🎵";
+                if (visualizer) visualizer.classList.remove('hidden');
+                playBgNoteSequence();
+                showToast("🎶 Música de fondo Lofi relajante activada", "success");
+            } else {
+                if (bgMusicTimeout) clearTimeout(bgMusicTimeout);
+                btn.className = "px-3 py-1.5 rounded-2xl bg-rose-100/80 hover:bg-rose-200 border border-rose-300 text-rose-900 text-xs font-black transition flex items-center gap-1.5 shadow-xs";
+                icon.className = "fa-solid fa-music text-rose-600";
+                text.textContent = "Música Ambient Lofi";
+                if (visualizer) visualizer.classList.add('hidden');
+                showToast("🔇 Música de fondo pausada", "info");
+            }
+        }
+
+        function playBgNoteSequence() {
+            if (!bgMusicPlaying) return;
+
+            try {
+                if (!bgMusicContext) bgMusicContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (bgMusicContext.state === 'suspended') bgMusicContext.resume();
+
+                const now = bgMusicContext.currentTime;
+                const chordIndex = Math.floor(bgStep / 8) % BG_CHORDS.length;
+                const chord = BG_CHORDS[chordIndex];
+                const noteFreq = chord[bgStep % chord.length];
+
+                // Soft sine wave arpeggio with subtle sub-bass
+                const osc = bgMusicContext.createOscillator();
+                const gain = bgMusicContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(noteFreq, now);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(0.035, now + 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+
+                osc.connect(gain);
+                gain.connect(bgMusicContext.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.6);
+
+                bgStep = (bgStep + 1) % 32;
+                bgMusicTimeout = setTimeout(playBgNoteSequence, 380);
+            } catch (e) {
+                console.warn('Bg music audio loop error:', e);
+            }
+        }
+
+        const BTS_MELODIES = {
+            lofi_lullaby: [
+                { note: 329.63, duration: 0.30 }, // E4
+                { note: 392.00, duration: 0.30 }, // G4
+                { note: 440.00, duration: 0.35 }, // A4
+                { note: 523.25, duration: 0.45 }, // C5
+                { note: 440.00, duration: 0.30 }, // A4
+                { note: 392.00, duration: 0.50 }  // G4
+            ],
+            springday: [
+                { note: 392.00, duration: 0.25 }, // G4
+                { note: 440.00, duration: 0.25 }, // A4
+                { note: 523.25, duration: 0.30 }, // C5
+                { note: 587.33, duration: 0.25 }, // D5
+                { note: 659.25, duration: 0.45 }  // E5
+            ],
+            heartbeat: [
+                { note: 440.00, duration: 0.22 }, // A4
+                { note: 523.25, duration: 0.22 }, // C5
+                { note: 659.25, duration: 0.28 }, // E5
+                { note: 587.33, duration: 0.22 }, // D5
+                { note: 523.25, duration: 0.40 }  // C5
+            ],
+            lifegoeson: [
+                { note: 523.25, duration: 0.22 }, // C5
+                { note: 587.33, duration: 0.22 }, // D5
+                { note: 659.25, duration: 0.28 }, // E5
+                { note: 523.25, duration: 0.22 }, // C5
+                { note: 440.00, duration: 0.40 }  // A4
+            ],
+            dna: [
+                { note: 659.25, duration: 0.18 }, // E5
+                { note: 783.99, duration: 0.18 }, // G5
+                { note: 880.00, duration: 0.18 }, // A5
+                { note: 987.77, duration: 0.25 }, // B5
+                { note: 880.00, duration: 0.18 }, // A5
+                { note: 783.99, duration: 0.18 }, // G5
+                { note: 659.25, duration: 0.35 }  // E5
+            ],
+            dynamite: [
+                { note: 523.25, duration: 0.14 }, // C5
+                { note: 523.25, duration: 0.14 }, // C5
+                { note: 587.33, duration: 0.14 }, // D5
+                { note: 659.25, duration: 0.22 }, // E5
+                { note: 523.25, duration: 0.18 }, // C5
+                { note: 440.00, duration: 0.35 }  // A4
+            ],
+            butter: [
+                { note: 587.33, duration: 0.15 }, // D5
+                { note: 659.25, duration: 0.15 }, // E5
+                { note: 698.46, duration: 0.15 }, // F5
+                { note: 783.99, duration: 0.22 }, // G5
+                { note: 659.25, duration: 0.30 }  // E5
+            ],
+            classic: [
+                { note: 659.25, duration: 0.15 },
+                { note: 880.00, duration: 0.25 }
+            ]
+        };
+
+        function playFetalHeartbeatSound() {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+
+                let now = ctx.currentTime;
+                
+                for (let i = 0; i < 4; i++) {
+                    const osc1 = ctx.createOscillator();
+                    const gain1 = ctx.createGain();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(85, now);
+                    osc1.frequency.exponentialRampToValueAtTime(35, now + 0.08);
+
+                    gain1.gain.setValueAtTime(0.001, now);
+                    gain1.gain.linearRampToValueAtTime(0.3, now + 0.02);
+                    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+                    osc1.connect(gain1);
+                    gain1.connect(ctx.destination);
+                    osc1.start(now);
+                    osc1.stop(now + 0.1);
+
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(105, now + 0.11);
+                    osc2.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+
+                    gain2.gain.setValueAtTime(0.001, now + 0.11);
+                    gain2.gain.linearRampToValueAtTime(0.25, now + 0.13);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
+
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.start(now + 0.11);
+                    osc2.stop(now + 0.21);
+
+                    now += 0.42;
+                }
+
+                showToast("💓 Simulador Doppler: Escuchando Latido Fetal (~140 BPM)", "info");
+            } catch (e) {
+                console.warn("Fetal audio synth error:", e);
+            }
+        }
+
+        function playBTSMelody(melodyKey = 'lofi_lullaby') {
+            if (!soundEnabled) return;
+
+            if (melodyKey === 'fetal') {
+                playFetalHeartbeatSound();
+                return;
+            }
+
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+
+                const notes = BTS_MELODIES[melodyKey] || BTS_MELODIES.lofi_lullaby;
+                let currentTime = ctx.currentTime;
+
+                notes.forEach((item) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(item.note, currentTime);
+
+                    gain.gain.setValueAtTime(0.001, currentTime);
+                    gain.gain.linearRampToValueAtTime(0.12, currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + item.duration);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(currentTime);
+                    osc.stop(currentTime + item.duration);
+
+                    currentTime += item.duration * 0.88;
+                });
+            } catch(e) {
+                console.warn('Web Audio synthesis error:', e);
+            }
+        }
+
+        function changeBTSMelody(val) {
+            selectedMelody = val;
+            playBTSMelody(val);
+            showToast(`Canción/Melodía activa cambiada 🎵`, 'success');
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const statusText = document.getElementById('soundStatusText');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-purple-600 text-sm';
+                statusText.textContent = 'Sonido On';
+                playBTSMelody(selectedMelody);
+                showToast('Efectos de sonido activados 🔔', 'success');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400 text-sm';
+                statusText.textContent = 'Sonido Off';
+                showToast('Sonido en silencio 🔇', 'info');
+            }
+        }
+
+        function switchTab(tabId) {
+            const tabs = ['calculadora', 'obstetricia', 'gestograma', 'analisis', 'historial'];
+            tabs.forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const mBtn = document.getElementById(`m-tab-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) {
+                    btn.className = "tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-purple-600 hover:bg-purple-50 flex items-center gap-2 font-black transition";
+                }
+                if (mBtn) {
+                    mBtn.className = "m-tab-btn py-1 text-slate-400 flex flex-col items-center transition";
+                }
+            });
+
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-3.5 py-2 rounded-xl text-purple-800 bg-purple-100/80 flex items-center gap-2 font-black transition shadow-xs";
+            }
+
+            const activeMBtn = document.getElementById(`m-tab-${tabId}`);
+            if (activeMBtn) {
+                activeMBtn.className = "m-tab-btn py-1 text-purple-700 font-bold flex flex-col items-center transition";
+            }
+
+            playBTSMelody('classic');
+        }
+
+        function ejecutarAlgoritmo() {
+            const pesoInput = document.getElementById('peso');
+            const tallaInput = document.getElementById('talla');
+
+            const peso = parseFloat(pesoInput.value);
+            const talla = parseFloat(tallaInput.value);
+
+            if (!peso || !talla || peso <= 0 || talla <= 0) return;
+
+            const imc = peso / (talla * talla);
+            const imcFixed = imc.toFixed(2);
+
+            let categoria = '';
+            let badgeClass = '';
+            let mascotHtml = '';
+            let stepDesc = '';
+            let pointerPercent = 0;
+
+            if (imc < 18.5) {
+                categoria = 'BAJO PESO';
+                badgeClass = 'bg-sky-100 text-sky-800 border border-sky-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-sky-500" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#E0F2FE"/>
+                        <circle cx="50" cy="38" r="14" fill="#0284C7"/>
+                        <path d="M32 72C32 58 40 52 50 52C60 52 68 58 68 72H32Z" fill="#0369A1"/>
+                    </svg>`;
+                stepDesc = `IMC < 18.5 → Clasificado como BAJO PESO. Se sugiere evaluación nutricional.`;
+                pointerPercent = Math.min(15, (imc / 18.5) * 15);
+            } else if (imc < 25) {
+                categoria = 'PESO NORMAL';
+                badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-emerald-500" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#D1FAE5"/>
+                        <circle cx="50" cy="38" r="14" fill="#059669"/>
+                        <path d="M32 72C32 58 40 52 50 52C60 52 68 58 68 72H32Z" fill="#047857"/>
+                    </svg>`;
+                stepDesc = `IMC < 25 → Clasificado como PESO NORMAL. ¡Excelente estado de salud!`;
+                pointerPercent = 15 + ((imc - 18.5) / 6.5) * 25;
+            } else if (imc < 30) {
+                categoria = 'SOBREPESO';
+                badgeClass = 'bg-amber-100 text-amber-800 border border-amber-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-amber-500" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#FEF3C7"/>
+                        <circle cx="50" cy="38" r="14" fill="#D97706"/>
+                        <path d="M32 72C32 58 40 52 50 52C60 52 68 58 68 72H32Z" fill="#B45309"/>
+                    </svg>`;
+                stepDesc = `IMC < 30 → Clasificado como SOBREPESO. Se recomienda actividad física y dieta balanceada.`;
+                pointerPercent = 40 + ((imc - 25) / 5) * 20;
+            } else if (imc < 35) {
+                categoria = 'OBESIDAD TIPO 1';
+                badgeClass = 'bg-orange-100 text-orange-800 border border-orange-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-orange-500" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#FFEDD5"/>
+                        <circle cx="50" cy="38" r="14" fill="#EA580C"/>
+                        <path d="M30 72C30 58 40 52 50 52C60 52 70 58 70 72H30Z" fill="#C2410C"/>
+                    </svg>`;
+                stepDesc = `IMC < 35 → Clasificado como OBESIDAD TIPO 1. Requiere atención médica y nutricional.`;
+                pointerPercent = 60 + ((imc - 30) / 5) * 15;
+            } else if (imc < 40) {
+                categoria = 'OBESIDAD TIPO 2';
+                badgeClass = 'bg-rose-100 text-rose-800 border border-rose-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-rose-500" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#FFE4E6"/>
+                        <circle cx="50" cy="38" r="14" fill="#E11D48"/>
+                        <path d="M30 72C30 58 40 52 50 52C60 52 70 58 70 72H30Z" fill="#BE123C"/>
+                    </svg>`;
+                stepDesc = `IMC < 40 → Clasificado como OBESIDAD TIPO 2. Riesgo cardiovascular elevado.`;
+                pointerPercent = 75 + ((imc - 35) / 5) * 15;
+            } else {
+                categoria = 'OBESIDAD TIPO 3';
+                badgeClass = 'bg-purple-100 text-purple-900 border border-purple-300';
+                mascotHtml = `
+                    <svg class="w-16 h-16 text-purple-600" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="42" fill="#F3E8FF"/>
+                        <circle cx="50" cy="38" r="14" fill="#9333EA"/>
+                        <path d="M30 72C30 58 40 52 50 52C60 52 70 58 70 72H30Z" fill="#7E22CE"/>
+                    </svg>`;
+                stepDesc = `IMC ≥ 40 → Clasificado como OBESIDAD TIPO 3 (Mórbida). Prioridad médica.`;
+                pointerPercent = Math.min(98, 90 + ((imc - 40) / 10) * 10);
+            }
+
+            // UI Updates
+            document.getElementById('resCategoryTitle').textContent = categoria;
+            const badge = document.getElementById('resBadge');
+            badge.className = `px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${badgeClass}`;
+            badge.textContent = categoria;
+
+            document.getElementById('resIMCVal').textContent = imcFixed;
+            document.getElementById('resStepDescription').textContent = stepDesc;
+            document.getElementById('resMascotIcon').innerHTML = mascotHtml;
+
+            const pointer = document.getElementById('gaugePointer');
+            pointer.style.left = `${Math.max(2, Math.min(98, pointerPercent))}%`;
+            pointer.style.opacity = '1';
+
+            // Target Healthy Weight Box
+            const minWeight = (18.5 * talla * talla).toFixed(1);
+            const maxWeight = (24.9 * talla * talla).toFixed(1);
+            document.getElementById('healthyRangeText').textContent = `Para tu talla (${talla.toFixed(2)} m), el peso ideal se ubica entre ${minWeight} kg y ${maxWeight} kg.`;
+            document.getElementById('healthyRangeBox').classList.remove('hidden');
+            document.getElementById('resultActions').classList.remove('hidden');
+
+            // Health Alert Banner
+            const alertSign = document.getElementById('healthAlertSign');
+            const alertIcon = document.getElementById('healthAlertIcon');
+            const alertTitle = document.getElementById('healthAlertTitle');
+            const alertMsg = document.getElementById('healthAlertMsg');
+
+            if (categoria === 'PESO NORMAL') {
+                alertSign.className = "my-3 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 flex items-center gap-3 shadow-md animate-pulse";
+                alertIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i>`;
+                alertTitle.textContent = "¡ESTÁS BIEN! 🎉 (PESO SALUDABLE)";
+                alertMsg.textContent = "Tu IMC se encuentra en el rango normal y óptimo según los estándares de la OMS / UNSAAC.";
+                showToast("✅ ¡Excelente! Estás en un peso saludable.", "success");
+                playDramaticResultSound('normal');
+            } else if (categoria === 'BAJO PESO') {
+                alertSign.className = "my-3 p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-center gap-3 shadow-md";
+                alertIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600"></i>`;
+                alertTitle.textContent = "¡ATENCIÓN! ⚠️ (BAJO PESO)";
+                alertMsg.textContent = "Te encuentras por debajo del peso recomendado. Se sugiere consulta alimentaria y médica.";
+                showToast("⚠️ Atención: Tu IMC indica Bajo Peso.", "error");
+                playDramaticResultSound('warning');
+            } else {
+                alertSign.className = "my-3 p-4 rounded-2xl bg-rose-50 border-2 border-rose-400 text-rose-950 flex items-center gap-3 shadow-md";
+                alertIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600"></i>`;
+                alertTitle.textContent = `¡ALERTA DE SALUD! 🚨 (${categoria})`;
+                alertMsg.textContent = "Tu IMC supera el rango normal recomendado. Te aconsejamos una evaluación nutricional y seguimiento de salud.";
+                showToast(`🚨 Alerta de Salud: Clasificación ${categoria}.`, "error");
+                playDramaticResultSound('danger');
+            }
+            alertSign.classList.remove('hidden');
+
+            // Nutrition & Analysis Live Update
+            const waterVal = (peso * 0.035).toFixed(1);
+            const calVal = Math.round(10 * peso + 6.25 * (talla * 100) - 5 * 22 + 5);
+            document.getElementById('analysisWaterVal').textContent = `${waterVal} L/día`;
+            document.getElementById('analysisCalVal').textContent = `${calVal} kcal`;
+            document.getElementById('analysisCatVal').textContent = imcFixed;
+            document.getElementById('analysisNoteVal').textContent = categoria;
+
+            ultimoResultado = {
+                peso: peso,
+                talla: talla,
+                imc: imcFixed,
+                categoria: categoria,
+                fecha: new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+            };
+        }
+
+        function calcularIMCGestacional() {
+            const pesoPre = parseFloat(document.getElementById('obsPesoPre').value);
+            const pesoAct = parseFloat(document.getElementById('obsPeso').value);
+            const talla = parseFloat(document.getElementById('obsTalla').value);
+            const eg = parseInt(document.getElementById('obsEG').value);
+
+            if (!pesoAct || !talla || pesoAct <= 0 || talla <= 0) return;
+
+            const imcAct = pesoAct / (talla * talla);
+            const imcFixed = imcAct.toFixed(1);
+
+            // Interpolated MINSA / Atalah thresholds for week `eg`
+            let lowNorm = 20.0 + Math.min(4.5, Math.max(0, eg - 10) * 0.15);
+            let highNorm = 24.9 + Math.min(3.0, Math.max(0, eg - 10) * 0.12);
+            let highSobre = 29.9 + Math.min(2.6, Math.max(0, eg - 10) * 0.08);
+
+            let diag = '';
+            let badgeClass = '';
+            let gainText = '';
+
+            if (imcAct < lowNorm) {
+                diag = 'BAJO PESO GESTACIONAL (Enflaquecida)';
+                badgeClass = 'bg-sky-100 text-sky-900 border border-sky-300';
+                gainText = 'Recomendación MINSA: Ganancia de peso esperada entre 12.5 kg y 18.0 kg durante la gestación. Vigilar nutrición materna.';
+                playDramaticResultSound('warning');
+            } else if (imcAct <= highNorm) {
+                diag = 'ESTADO NUTRICIONAL NORMAL';
+                badgeClass = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+                gainText = 'Recomendación MINSA: Ganancia de peso adecuada entre 11.5 kg y 16.0 kg durante la gestación. ¡Evolución muy favorable!';
+                playDramaticResultSound('normal');
+            } else if (imcAct <= highSobre) {
+                diag = 'SOBREPESO GESTACIONAL';
+                badgeClass = 'bg-amber-100 text-amber-900 border border-amber-300';
+                gainText = 'Recomendación MINSA: Ganancia de peso controlada entre 7.0 kg y 11.5 kg. Dieta balanceada y monitoreo nutricional.';
+                playDramaticResultSound('warning');
+            } else {
+                diag = 'OBESIDAD GESTACIONAL';
+                badgeClass = 'bg-rose-100 text-rose-900 border border-rose-300';
+                gainText = 'Recomendación MINSA: Ganancia de peso vigilada entre 5.0 kg y 9.0 kg. Vigilancia estrecha de presión arterial y glucosa.';
+                playDramaticResultSound('danger');
+            }
+
+            document.getElementById('obsIMCText').textContent = `IMC Gestacional: ${imcFixed}`;
+            document.getElementById('obsDiagText').textContent = `Semanas: ${eg} sem | Diagnóstico Nutricional: ${diag}`;
+            const badge = document.getElementById('obsBadge');
+            badge.className = `px-3 py-1 rounded-full text-xs font-black ${badgeClass}`;
+            badge.textContent = diag;
+
+            // Calculate Pre-pregnancy weight gain metrics if entered
+            const metricsBox = document.getElementById('obsExpandedMetrics');
+            if (pesoPre && pesoPre > 0) {
+                const gainAcum = pesoAct - pesoPre;
+                const gainWeekly = eg > 0 ? (gainAcum / eg).toFixed(2) : '0.00';
+                
+                document.getElementById('obsGainVal').textContent = `${gainAcum >= 0 ? '+' : ''}${gainAcum.toFixed(1)} kg`;
+                document.getElementById('obsGainWeeklyVal').textContent = `${gainWeekly} kg/sem`;
+                
+                // Fundal Height estimation (McDonald rule: AU ~ EG +- 2cm after 18 weeks)
+                const auEst = eg >= 12 ? Math.max(10, eg - 1) : 0;
+                document.getElementById('obsAUVal').textContent = auEst > 0 ? `${auEst} cm` : 'N/A';
+
+                // Fetal Weight Estimation approximation
+                let pfeGramos = 0;
+                if (eg >= 20) {
+                    pfeGramos = Math.round(Math.pow(eg, 2.7) * 0.13);
+                }
+                document.getElementById('obsPFEVal').textContent = pfeGramos > 0 ? `~${pfeGramos} g` : '< 300 g';
+
+                metricsBox.classList.remove('hidden');
+            } else {
+                metricsBox.classList.add('hidden');
+            }
+
+            document.getElementById('obsWeightGainText').textContent = gainText;
+            document.getElementById('obsRecommendation').classList.remove('hidden');
+
+            playBTSMelody('heartbeat');
+        }
+
+        function calcularFUM() {
+            const dateVal = document.getElementById('fumDate').value;
+            if (!dateVal) return;
+
+            const fum = new Date(dateVal + 'T00:00:00');
+            const today = new Date();
+
+            // Naegele's Rule FPP = FUM + 280 days (40 weeks)
+            const fpp = new Date(fum.getTime() + 280 * 24 * 60 * 60 * 1000);
+
+            // Diff in days for EG
+            const diffMs = today.getTime() - fum.getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                showToast('La FUM no puede ser posterior a la fecha actual.', 'error');
+                return;
+            }
+
+            const semanas = Math.floor(diffDays / 7);
+            const dias = diffDays % 7;
+
+            document.getElementById('resEGVal').textContent = `${semanas} Semanas + ${dias} Días`;
+            
+            const fppFormatted = fpp.toLocaleDateString('es-PE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('resFPPVal').textContent = fppFormatted;
+
+            let trimText = '';
+            if (semanas < 14) trimText = '🌱 Primer Trimestre (Semanas 1 a 13) - Control prenatal inicial, Ácido Fólico y ecografía de viabilidad.';
+            else if (semanas < 28) trimText = '💓 Segundo Trimestre (Semanas 14 a 27) - Tamizaje morfológico, suplementación de Hierro y percepción de movimientos fetales.';
+            else if (semanas <= 42) trimText = '👶 Tercer Trimestre (Semanas 28 a 42) - Monitoreo de crecimiento fetal, preparación del plan de parto y vigilancia materna.';
+            else trimText = '⚠️ Gestación cronológicamente prolongada (≥ 42 semanas).';
+
+            document.getElementById('fppTrimestres').textContent = trimText;
+
+            playBTSMelody('heartbeat');
+        }
+
+        function autocorregirTallaCm() {
+            const input = document.getElementById('talla');
+            let val = parseFloat(input.value);
+            if (val && val > 10) {
+                val = (val / 100).toFixed(2);
+                input.value = val;
+                showToast(`Talla corregida a ${val} metros`, 'info');
+                ejecutarAlgoritmo();
+            } else {
+                showToast('Ingresa un valor en centímetros (ej. 165)', 'info');
+            }
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('peso').value = '';
+            document.getElementById('talla').value = '';
+            document.getElementById('resCategoryTitle').textContent = 'Ingresa datos';
+            document.getElementById('resBadge').className = 'px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-400';
+            document.getElementById('resBadge').textContent = 'En espera';
+            document.getElementById('resIMCVal').textContent = '0.00';
+            document.getElementById('resStepDescription').textContent = 'Ingrese peso y talla para iniciar el recorrido en el diagrama de flujo.';
+            document.getElementById('gaugePointer').style.opacity = '0';
+            document.getElementById('healthyRangeBox').classList.add('hidden');
+            document.getElementById('resultActions').classList.add('hidden');
+            document.getElementById('healthAlertSign').classList.add('hidden');
+            document.getElementById('resMascotIcon').innerHTML = `<i class="fa-solid fa-heart-pulse text-5xl text-purple-300"></i>`;
+            
+            document.querySelectorAll('.flow-node').forEach(n => n.classList.remove('flow-node-active'));
+            document.getElementById('trace-eval').textContent = 'Esperando evaluación...';
+            ultimoResultado = null;
+            showToast('Formulario reiniciado', 'info');
+        }
+
+        function presetData(p, t) {
+            document.getElementById('peso').value = p;
+            document.getElementById('talla').value = t;
+            ejecutarAlgoritmo();
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toastMessage');
+            toast.className = 'fixed bottom-16 md:bottom-6 right-5 z-50 p-3.5 rounded-2xl shadow-xl border text-xs font-black transition-all max-w-xs ';
+            if (type === 'error') toast.className += 'bg-rose-50 text-rose-800 border-rose-200';
+            else if (type === 'success') toast.className += 'bg-emerald-50 text-emerald-900 border-emerald-200';
+            else toast.className += 'bg-slate-900 text-white border-slate-800';
+
+            toast.innerHTML = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3200);
+        }
+
+        function copiarResultado() {
+            if (!ultimoResultado) return;
+            const text = `UNSAAC Obstetricia - Resultado IMC\nAutora: Hayde Yeniffer Lizaraso Sarmiento\nPeso: ${ultimoResultado.peso} kg | Talla: ${ultimoResultado.talla} m\nIMC: ${ultimoResultado.imc} (${ultimoResultado.categoria})`;
+            const area = document.createElement("textarea");
+            area.value = text;
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand('copy');
+            document.body.removeChild(area);
+            showToast('¡Resultado copiado al portapapeles!', 'success');
+        }
+
+        function guardarEnHistorial() {
+            if (!ultimoResultado) return;
+            let hist = [];
+            try { hist = JSON.parse(localStorage.getItem('unsaac_imc_history')) || []; } catch(e){}
+            hist.unshift(ultimoResultado);
+            if (hist.length > 15) hist.pop();
+            localStorage.setItem('unsaac_imc_history', JSON.stringify(hist));
+            renderHistorial();
+            showToast('Guardado en el historial offline 💾', 'success');
+        }
+
+        function renderHistorial() {
+            const list = document.getElementById('historyList');
+            let hist = [];
+            try { hist = JSON.parse(localStorage.getItem('unsaac_imc_history')) || []; } catch(e){}
+            if (hist.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-8 font-medium">No hay registros guardados en la memoria del dispositivo.</p>`;
+                return;
+            }
+            list.innerHTML = hist.map(item => `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-black text-slate-800">${item.categoria}</span>
+                        <div class="text-slate-500 font-bold text-[11px]">
+                            ${item.peso} kg &bull; ${item.talla} m &bull; <span class="text-purple-700">IMC ${item.imc}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-black text-slate-400 bg-white px-2.5 py-1 rounded-lg border border-slate-200">${item.fecha}</span>
+                </div>
+            `).join('');
+        }
+
+        function borrarHistorial() {
+            localStorage.removeItem('unsaac_imc_history');
+            renderHistorial();
+            showToast('Historial borrado.', 'info');
+        }
+
+        function setupOfflineSupport() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE = 'unsaac-imc-obs-v5';
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                    });
+                `;
+                try {
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+                } catch(e) {}
+            }
+
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+        }
+
+        function updateNetworkStatus() {
+            const badge = document.getElementById('offlineStatusBadge');
+            if (navigator.onLine) {
+                badge.className = "text-[9px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>Modo Offline Listo</span>`;
+            } else {
+                badge.className = "text-[9px] bg-amber-100 text-amber-900 font-black px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-1";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span>Sin Conexión (Modo Offline)</span>`;
+            }
+        }
+
+        window.onload = function() {
+            renderHistorial();
+            setupOfflineSupport();
+            updateNetworkStatus();
+        };
+    </script>
+</body>
+</html>
